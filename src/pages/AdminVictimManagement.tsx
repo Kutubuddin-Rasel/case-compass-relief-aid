@@ -2,74 +2,101 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { Home, Users, FileText, Calendar, Bell, Settings, ClipboardList, Search, Plus, Edit, Eye } from 'lucide-react';
+import { FileText, Users, Calendar, Settings, Bell, Search, Plus, Filter, FileText as FileIcon } from 'lucide-react';
 
-// Mock victims data
-const mockVictims = [
-  {
-    id: 'v001',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '(555) 123-4567',
-    dateAdded: '2025-03-15T10:30:00',
-    status: 'active',
-    casesCount: 2
-  },
-  {
-    id: 'v002',
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '(555) 234-5678',
-    dateAdded: '2025-03-20T14:15:00',
-    status: 'active',
-    casesCount: 1
-  },
-  {
-    id: 'v003',
-    name: 'Robert Johnson',
-    email: 'robert.johnson@example.com',
-    phone: '(555) 345-6789',
-    dateAdded: '2025-03-25T09:45:00',
-    status: 'inactive',
-    casesCount: 0
-  },
-  {
-    id: 'v004',
-    name: 'Sarah Williams',
-    email: 'sarah.williams@example.com',
-    phone: '(555) 456-7890',
-    dateAdded: '2025-04-01T11:20:00',
-    status: 'active',
-    casesCount: 3
-  },
-  {
-    id: 'v005',
-    name: 'Michael Brown',
-    email: 'michael.brown@example.com',
-    phone: '(555) 567-8901',
-    dateAdded: '2025-04-05T13:10:00',
-    status: 'pending',
-    casesCount: 1
-  }
-];
+// Define types
+interface Victim {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  casesCount: number;
+  registeredDate: string;
+  lastActivity: string;
+}
 
 const AdminVictimManagement = () => {
   const navigate = useNavigate();
-  const [victims, setVictims] = useState(mockVictims);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
-  // Get the sidebar items for admin
-  const sidebarItems = [
+  
+  // Mock data for victims
+  const mockVictims: Victim[] = [
+    {
+      id: 'VT-2023-001',
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+      phone: '(555) 123-4567',
+      status: 'active',
+      casesCount: 3,
+      registeredDate: '2023-09-15',
+      lastActivity: '2025-05-01'
+    },
+    {
+      id: 'VT-2023-002',
+      name: 'Jane Smith',
+      email: 'jane.smith@example.com',
+      phone: '(555) 987-6543',
+      status: 'active',
+      casesCount: 2,
+      registeredDate: '2023-10-10',
+      lastActivity: '2025-04-28'
+    },
+    {
+      id: 'VT-2023-003',
+      name: 'Emily Wilson',
+      email: 'emily.w@example.com',
+      phone: '(555) 456-7890',
+      status: 'inactive',
+      casesCount: 1,
+      registeredDate: '2023-11-05',
+      lastActivity: '2025-03-15'
+    },
+    {
+      id: 'VT-2023-004',
+      name: 'Maria Garcia',
+      email: 'maria.g@example.com',
+      phone: '(555) 222-3333',
+      status: 'active',
+      casesCount: 4,
+      registeredDate: '2023-08-20',
+      lastActivity: '2025-05-02'
+    },
+    {
+      id: 'VT-2023-005',
+      name: 'David Brown',
+      email: 'david.b@example.com',
+      phone: '(555) 111-2222',
+      status: 'pending',
+      casesCount: 1,
+      registeredDate: '2025-04-30',
+      lastActivity: '2025-04-30'
+    }
+  ];
+  
+  // Filtering logic
+  const filteredVictims = mockVictims.filter((victim) => {
+    const matchesSearch = 
+      victim.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      victim.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      victim.id.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const matchesStatus = statusFilter === 'all' || victim.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+  
+  // Get sidebar items
+  const getSidebarItems = () => [
     {
       name: 'Dashboard',
       href: '/admin/dashboard',
-      icon: <Home />,
+      icon: <FileText />,
     },
     {
       name: 'Intake',
@@ -84,7 +111,7 @@ const AdminVictimManagement = () => {
     {
       name: 'Cases',
       href: '/admin/cases',
-      icon: <FileText />,
+      icon: <FileIcon />,
     },
     {
       name: 'Appointments',
@@ -97,159 +124,119 @@ const AdminVictimManagement = () => {
       icon: <Bell />,
     },
     {
-      name: 'Reports',
-      href: '/admin/reports',
-      icon: <ClipboardList />,
-    },
-    {
       name: 'Settings',
       href: '/admin/settings',
       icon: <Settings />,
     },
   ];
-
-  const handleStatusChange = (victimId: string, newStatus: string) => {
-    setVictims(victims.map(victim => 
-      victim.id === victimId ? { ...victim, status: newStatus } : victim
-    ));
-    
-    toast.success(`Victim status updated to ${newStatus}`);
+  
+  // Status badge color mapping
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'inactive': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'pending': return 'bg-amber-100 text-amber-800 border-amber-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
-  const filteredVictims = victims.filter(victim => {
-    // Filter by search term
-    const matchesSearch = 
-      victim.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      victim.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      victim.phone.includes(searchTerm);
-    
-    // Filter by status
-    const matchesStatus = statusFilter === 'all' || victim.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
   return (
-    <DashboardLayout title="Victim Management" sidebarItems={sidebarItems}>
+    <DashboardLayout title="Victim Management" sidebarItems={getSidebarItems()}>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
-          <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-4">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="Search victims..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <select
-              className="p-2 border rounded-md"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="pending">Pending</option>
-            </select>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Victims</h1>
+            <p className="text-gray-500">Manage victim profiles and cases</p>
           </div>
-          
-          <Button onClick={() => navigate('/admin/intake')}>
+          <Button onClick={() => navigate('/admin/intake')} className="bg-healing-600 hover:bg-healing-700">
             <Plus className="w-4 h-4 mr-2" />
-            New Victim Intake
+            Register New Victim
           </Button>
         </div>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Victims ({filteredVictims.length})</CardTitle>
+          <CardHeader>
+            <CardTitle>Search & Filter</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-4 py-3 text-left">Name</th>
-                    <th className="px-4 py-3 text-left">Contact</th>
-                    <th className="px-4 py-3 text-left">Date Added</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                    <th className="px-4 py-3 text-left">Cases</th>
-                    <th className="px-4 py-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredVictims.length > 0 ? (
-                    filteredVictims.map((victim) => (
-                      <tr key={victim.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3">
-                          <div className="font-medium">{victim.name}</div>
-                          <div className="text-xs text-gray-500">ID: {victim.id}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div>{victim.email}</div>
-                          <div>{victim.phone}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {new Date(victim.dateAdded).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge variant={
-                            victim.status === 'active' ? 'default' :
-                            victim.status === 'inactive' ? 'destructive' :
-                            'outline'
-                          }>
-                            {victim.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          {victim.casesCount} {victim.casesCount === 1 ? 'case' : 'cases'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/victims/${victim.id}`)}>
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">View</span>
-                            </Button>
-                            
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/victims/${victim.id}/edit`)}>
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                            
-                            {victim.status === 'active' ? (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-red-500 hover:text-red-700"
-                                onClick={() => handleStatusChange(victim.id, 'inactive')}
-                              >
-                                Deactivate
-                              </Button>
-                            ) : (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-green-500 hover:text-green-700"
-                                onClick={() => handleStatusChange(victim.id, 'active')}
-                              >
-                                Activate
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center">
-                        <div className="text-gray-500">No victims found matching your criteria</div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Search by name, email or ID..."
+                    className="pl-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <select 
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Victim Registry ({filteredVictims.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredVictims.length > 0 ? (
+                filteredVictims.map((victim) => (
+                  <div
+                    key={victim.id}
+                    className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/admin/victims/${victim.id}`)}
+                  >
+                    <div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 sm:mb-0">
+                        <p className="font-medium text-gray-900">{victim.name}</p>
+                        <Badge variant="outline">{victim.id}</Badge>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-500">
+                        <p>{victim.email}</p>
+                        <div className="hidden sm:block h-1 w-1 rounded-full bg-gray-300"></div>
+                        <p>{victim.phone}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
+                      <Badge className={getStatusBadgeColor(victim.status)}>
+                        {victim.status.charAt(0).toUpperCase() + victim.status.slice(1)}
+                      </Badge>
+                      <div className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                        {victim.casesCount} {victim.casesCount === 1 ? 'case' : 'cases'}
+                      </div>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        Last active: {new Date(victim.lastActivity).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No victims found matching your search</p>
+                  <Button variant="outline" className="mt-2" onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                  }}>
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

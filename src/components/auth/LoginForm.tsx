@@ -17,20 +17,28 @@ const LoginForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, you'd validate and send to an API
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
     }
     
-    // This is a mock login - in a real app, you'd check credentials against an API
-    toast.success(`Successfully logged in as ${isAdmin ? "admin" : "victim"}`);
+    // Admin login check
+    if (email === "admin@gmail.com" && password === "admin") {
+      toast.success("Successfully logged in as administrator");
+      localStorage.setItem("userType", "admin");
+      navigate("/admin/dashboard");
+      return;
+    }
     
-    // Store user type in localStorage for demo purposes
-    localStorage.setItem("userType", isAdmin ? "admin" : "victim");
-    
-    // Redirect based on user type
-    navigate(isAdmin ? "/admin/dashboard" : "/dashboard");
+    // Regular victim user login (for demo purposes)
+    if (isAdmin) {
+      toast.error("Invalid admin credentials");
+      return;
+    } else {
+      toast.success("Successfully logged in as victim");
+      localStorage.setItem("userType", "victim");
+      navigate("/dashboard");
+    }
   };
 
   return (
@@ -100,14 +108,24 @@ const LoginForm = () => {
         </div>
         
         <div className="flex items-center mt-4">
-          <Checkbox 
-            id="admin-toggle" 
-            checked={isAdmin}
-            onCheckedChange={(checked) => setIsAdmin(checked === true)}
-          />
-          <Label htmlFor="admin-toggle" className="ml-2 text-sm cursor-pointer">
-            Login as administrator
-          </Label>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="admin-toggle" 
+              checked={isAdmin}
+              onCheckedChange={(checked) => setIsAdmin(checked === true)}
+            />
+            <Label htmlFor="admin-toggle" className="text-sm cursor-pointer">
+              Login as administrator
+            </Label>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-xs text-yellow-800">
+            <strong>Admin credentials:</strong><br />
+            Email: admin@gmail.com<br />
+            Password: admin
+          </p>
         </div>
         
         <div className="text-center mt-6">

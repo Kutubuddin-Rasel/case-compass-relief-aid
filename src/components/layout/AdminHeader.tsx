@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Menu, Bell } from 'lucide-react';
+import { Menu, Bell, UserCog } from 'lucide-react';
 
 interface AdminHeaderProps {
   title: string;
@@ -24,6 +24,16 @@ const AdminHeader = ({ title, toggleSidebar, isSidebarOpen }: AdminHeaderProps) 
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>('Admin User');
   const [notificationCount, setNotificationCount] = useState(3);
+  
+  useEffect(() => {
+    // Check if user is authenticated and is an admin
+    const userType = localStorage.getItem('userType');
+    if (!userType) {
+      navigate('/login');
+    } else if (userType !== 'admin') {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
   
   const handleLogout = () => {
     localStorage.removeItem('userType');
@@ -76,7 +86,10 @@ const AdminHeader = ({ title, toggleSidebar, isSidebarOpen }: AdminHeaderProps) 
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleViewProfile}>Profile</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleViewProfile}>
+                <UserCog className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
                 Settings
               </DropdownMenuItem>

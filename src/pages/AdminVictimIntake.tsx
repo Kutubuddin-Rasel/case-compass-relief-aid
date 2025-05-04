@@ -2,60 +2,109 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Home, Users, FileText, Calendar, Bell, Settings, ClipboardList, ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { FileText, Users, Calendar, Settings, Bell, Save, Plus, FileText as FileIcon } from 'lucide-react';
 
 const AdminVictimIntake = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState({
-    // Personal Info
+    // Personal Information
     firstName: '',
     lastName: '',
-    gender: '',
-    dateOfBirth: '',
-    idNumber: '',
-    // Contact Info
     email: '',
     phone: '',
-    address: '',
+    dateOfBirth: '',
+    gender: '',
+    
+    // Address
+    street: '',
     city: '',
     state: '',
     zipCode: '',
+    
     // Emergency Contact
     emergencyName: '',
-    emergencyRelationship: '',
+    emergencyRelation: '',
     emergencyPhone: '',
-    // Case Info
-    incidentDate: '',
-    incidentDescription: '',
-    incidentLocation: '',
-    // Additional Info
-    medicalNeeds: '',
-    currentMedication: '',
-    psychologicalSupport: false,
-    legalAidNeeded: false,
-    financialAidNeeded: false,
-    housingNeeded: false
+    
+    // Case Information
+    caseType: '',
+    description: '',
+    priorityLevel: 'medium',
+    
+    // Required Documents
+    hasIdentification: false,
+    hasProofOfResidence: false,
+    hasIncomeVerification: false,
+    
+    // Consent
+    consentToShare: false,
+    privacyAgreement: false
   });
   
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-
-  // Get the sidebar items for admin
-  const sidebarItems = [
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  
+  // Handle checkbox change
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setFormData({
+      ...formData,
+      [name]: checked
+    });
+  };
+  
+  // Next form step
+  const handleNextStep = () => {
+    if (formStep < 4) {
+      setFormStep(formStep + 1);
+    }
+  };
+  
+  // Previous form step
+  const handlePreviousStep = () => {
+    if (formStep > 1) {
+      setFormStep(formStep - 1);
+    }
+  };
+  
+  // Submit form
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate consent checkboxes
+    if (!formData.consentToShare || !formData.privacyAgreement) {
+      toast.error("Consent and privacy agreement are required");
+      return;
+    }
+    
+    toast.success("Victim successfully registered");
+    navigate("/admin/victims");
+  };
+  
+  // Get sidebar items
+  const getSidebarItems = () => [
     {
       name: 'Dashboard',
       href: '/admin/dashboard',
-      icon: <Home />,
+      icon: <FileText />,
     },
     {
       name: 'Intake',
       href: '/admin/intake',
-      icon: <Users />,
+      icon: <Plus />,
     },
     {
       name: 'Victims',
@@ -65,7 +114,7 @@ const AdminVictimIntake = () => {
     {
       name: 'Cases',
       href: '/admin/cases',
-      icon: <FileText />,
+      icon: <FileIcon />,
     },
     {
       name: 'Appointments',
@@ -78,511 +127,434 @@ const AdminVictimIntake = () => {
       icon: <Bell />,
     },
     {
-      name: 'Reports',
-      href: '/admin/reports',
-      icon: <ClipboardList />,
-    },
-    {
       name: 'Settings',
       href: '/admin/settings',
       icon: <Settings />,
     },
   ];
-
-  const steps = [
-    {
-      title: 'Personal Information',
-      description: 'Basic personal details of the victim',
-      fields: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'idNumber']
-    },
-    {
-      title: 'Contact Information',
-      description: 'Contact details and address',
-      fields: ['email', 'phone', 'address', 'city', 'state', 'zipCode']
-    },
-    {
-      title: 'Emergency Contact',
-      description: 'Person to contact in case of emergency',
-      fields: ['emergencyName', 'emergencyRelationship', 'emergencyPhone']
-    },
-    {
-      title: 'Case Information',
-      description: 'Details about the incident',
-      fields: ['incidentDate', 'incidentDescription', 'incidentLocation']
-    },
-    {
-      title: 'Additional Needs',
-      description: 'Support services required',
-      fields: ['medicalNeeds', 'currentMedication', 'psychologicalSupport', 'legalAidNeeded', 'financialAidNeeded', 'housingNeeded']
-    },
-  ];
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      const target = e.target as HTMLInputElement;
-      setFormData({
-        ...formData,
-        [name]: target.checked
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
-    
-    // Clear the error for this field if it exists
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
-    }
-  };
-
-  const validateStep = () => {
-    const currentFields = steps[currentStep].fields;
-    const newErrors: {[key: string]: string} = {};
-    let isValid = true;
-
-    currentFields.forEach((field) => {
-      // Only validate string fields
-      if (typeof formData[field as keyof typeof formData] === 'string') {
-        const value = formData[field as keyof typeof formData] as string;
-        
-        if (!value.trim() && field !== 'currentMedication') { // Make currentMedication optional
-          newErrors[field] = 'This field is required';
-          isValid = false;
-        }
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleNext = () => {
-    if (validateStep()) {
-      if (currentStep < steps.length - 1) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        handleSubmit();
-      }
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSubmit = () => {
-    // In a real app, you would send this data to your backend
-    console.log('Form submitted:', formData);
-    
-    toast.success('Victim intake completed successfully!');
-    
-    // Navigate to the victim management page
-    setTimeout(() => {
-      navigate('/admin/victims');
-    }, 2000);
-  };
-
-  const renderPersonalInfo = () => (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">First Name*</label>
-          <Input
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
-            className={errors.firstName ? 'border-red-500' : ''}
-          />
-          {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Last Name*</label>
-          <Input
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
-            className={errors.lastName ? 'border-red-500' : ''}
-          />
-          {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Gender*</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded ${errors.gender ? 'border-red-500' : ''}`}
+  
+  // Render form step indicator
+  const renderStepIndicator = () => {
+    return (
+      <div className="flex justify-between mb-8">
+        {[1, 2, 3, 4].map((step) => (
+          <div 
+            key={step} 
+            className={`flex flex-col items-center ${step <= formStep ? 'text-healing-600' : 'text-gray-400'}`}
           >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-            <option value="prefer_not_to_say">Prefer not to say</option>
-          </select>
-          {errors.gender && <p className="text-red-500 text-sm">{errors.gender}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Date of Birth*</label>
-          <Input
-            type="date"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
-            onChange={handleChange}
-            className={errors.dateOfBirth ? 'border-red-500' : ''}
-          />
-          {errors.dateOfBirth && <p className="text-red-500 text-sm">{errors.dateOfBirth}</p>}
-        </div>
-        
-        <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">ID Number/Passport*</label>
-          <Input
-            name="idNumber"
-            value={formData.idNumber}
-            onChange={handleChange}
-            className={errors.idNumber ? 'border-red-500' : ''}
-          />
-          {errors.idNumber && <p className="text-red-500 text-sm">{errors.idNumber}</p>}
-        </div>
+            <div 
+              className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 
+                ${step < formStep ? 'bg-healing-600 text-white' : 
+                  step === formStep ? 'border-2 border-healing-600 text-healing-600' : 
+                  'border-2 border-gray-300 text-gray-400'}`}
+            >
+              {step < formStep ? '✓' : step}
+            </div>
+            <span className="text-xs">
+              {step === 1 ? 'Personal' : 
+               step === 2 ? 'Contact' :
+               step === 3 ? 'Case' : 'Consent'}
+            </span>
+          </div>
+        ))}
       </div>
-    </>
-  );
-
-  const renderContactInfo = () => (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Email*</label>
-          <Input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className={errors.email ? 'border-red-500' : ''}
-          />
-          {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Phone*</label>
-          <Input
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className={errors.phone ? 'border-red-500' : ''}
-          />
-          {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
-        </div>
-        
-        <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Address*</label>
-          <Input
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            className={errors.address ? 'border-red-500' : ''}
-          />
-          {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">City*</label>
-          <Input
-            name="city"
-            value={formData.city}
-            onChange={handleChange}
-            className={errors.city ? 'border-red-500' : ''}
-          />
-          {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">State/Province*</label>
-          <Input
-            name="state"
-            value={formData.state}
-            onChange={handleChange}
-            className={errors.state ? 'border-red-500' : ''}
-          />
-          {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Zip/Postal Code*</label>
-          <Input
-            name="zipCode"
-            value={formData.zipCode}
-            onChange={handleChange}
-            className={errors.zipCode ? 'border-red-500' : ''}
-          />
-          {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
-        </div>
-      </div>
-    </>
-  );
-
-  const renderEmergencyContact = () => (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Emergency Contact Name*</label>
-          <Input
-            name="emergencyName"
-            value={formData.emergencyName}
-            onChange={handleChange}
-            className={errors.emergencyName ? 'border-red-500' : ''}
-          />
-          {errors.emergencyName && <p className="text-red-500 text-sm">{errors.emergencyName}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Relationship to Victim*</label>
-          <Input
-            name="emergencyRelationship"
-            value={formData.emergencyRelationship}
-            onChange={handleChange}
-            className={errors.emergencyRelationship ? 'border-red-500' : ''}
-          />
-          {errors.emergencyRelationship && <p className="text-red-500 text-sm">{errors.emergencyRelationship}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Emergency Contact Phone*</label>
-          <Input
-            name="emergencyPhone"
-            value={formData.emergencyPhone}
-            onChange={handleChange}
-            className={errors.emergencyPhone ? 'border-red-500' : ''}
-          />
-          {errors.emergencyPhone && <p className="text-red-500 text-sm">{errors.emergencyPhone}</p>}
-        </div>
-      </div>
-    </>
-  );
-
-  const renderCaseInfo = () => (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Incident Date*</label>
-          <Input
-            type="date"
-            name="incidentDate"
-            value={formData.incidentDate}
-            onChange={handleChange}
-            className={errors.incidentDate ? 'border-red-500' : ''}
-          />
-          {errors.incidentDate && <p className="text-red-500 text-sm">{errors.incidentDate}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Incident Location*</label>
-          <Input
-            name="incidentLocation"
-            value={formData.incidentLocation}
-            onChange={handleChange}
-            className={errors.incidentLocation ? 'border-red-500' : ''}
-          />
-          {errors.incidentLocation && <p className="text-red-500 text-sm">{errors.incidentLocation}</p>}
-        </div>
-        
-        <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Incident Description*</label>
-          <Textarea
-            name="incidentDescription"
-            value={formData.incidentDescription}
-            onChange={handleChange}
-            rows={4}
-            className={errors.incidentDescription ? 'border-red-500' : ''}
-          />
-          {errors.incidentDescription && <p className="text-red-500 text-sm">{errors.incidentDescription}</p>}
-        </div>
-      </div>
-    </>
-  );
-
-  const renderAdditionalNeeds = () => (
-    <>
-      <div className="grid grid-cols-1 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Medical Needs*</label>
-          <Textarea
-            name="medicalNeeds"
-            value={formData.medicalNeeds}
-            onChange={handleChange}
-            rows={3}
-            className={errors.medicalNeeds ? 'border-red-500' : ''}
-          />
-          {errors.medicalNeeds && <p className="text-red-500 text-sm">{errors.medicalNeeds}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Current Medication</label>
-          <Textarea
-            name="currentMedication"
-            value={formData.currentMedication}
-            onChange={handleChange}
-            rows={2}
-          />
-        </div>
-        
-        <div className="space-y-4 mt-4">
-          <label className="text-sm font-medium">Required Support Services</label>
+    );
+  };
+  
+  // Render personal information form
+  const renderPersonalInfoForm = () => {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="psychologicalSupport"
-                name="psychologicalSupport"
-                checked={formData.psychologicalSupport}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    psychologicalSupport: e.target.checked
-                  });
-                }}
-                className="h-4 w-4"
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="dateOfBirth">Date of Birth</Label>
+            <Input
+              id="dateOfBirth"
+              name="dateOfBirth"
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gender</Label>
+            <select
+              id="gender"
+              name="gender"
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              value={formData.gender}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render address and emergency contact form
+  const renderContactForm = () => {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Address Information</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="street">Street Address</Label>
+            <Input
+              id="street"
+              name="street"
+              value={formData.street}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                required
               />
-              <label htmlFor="psychologicalSupport">Psychological Support</label>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="legalAidNeeded"
-                name="legalAidNeeded"
-                checked={formData.legalAidNeeded}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    legalAidNeeded: e.target.checked
-                  });
-                }}
-                className="h-4 w-4"
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                required
               />
-              <label htmlFor="legalAidNeeded">Legal Aid</label>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="financialAidNeeded"
-                name="financialAidNeeded"
-                checked={formData.financialAidNeeded}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    financialAidNeeded: e.target.checked
-                  });
-                }}
-                className="h-4 w-4"
+            <div className="space-y-2">
+              <Label htmlFor="zipCode">ZIP Code</Label>
+              <Input
+                id="zipCode"
+                name="zipCode"
+                value={formData.zipCode}
+                onChange={handleInputChange}
+                required
               />
-              <label htmlFor="financialAidNeeded">Financial Aid</label>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Emergency Contact</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="emergencyName">Full Name</Label>
+            <Input
+              id="emergencyName"
+              name="emergencyName"
+              value={formData.emergencyName}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="emergencyRelation">Relationship</Label>
+              <Input
+                id="emergencyRelation"
+                name="emergencyRelation"
+                value={formData.emergencyRelation}
+                onChange={handleInputChange}
+                required
+              />
             </div>
             
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="housingNeeded"
-                name="housingNeeded"
-                checked={formData.housingNeeded}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    housingNeeded: e.target.checked
-                  });
-                }}
-                className="h-4 w-4"
+            <div className="space-y-2">
+              <Label htmlFor="emergencyPhone">Phone</Label>
+              <Input
+                id="emergencyPhone"
+                name="emergencyPhone"
+                type="tel"
+                value={formData.emergencyPhone}
+                onChange={handleInputChange}
+                required
               />
-              <label htmlFor="housingNeeded">Housing Assistance</label>
             </div>
           </div>
         </div>
       </div>
-    </>
-  );
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 0:
-        return renderPersonalInfo();
+    );
+  };
+  
+  // Render case information form
+  const renderCaseForm = () => {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Case Details</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="caseType">Case Type</Label>
+            <select
+              id="caseType"
+              name="caseType"
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              value={formData.caseType}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Select Case Type</option>
+              <option value="housing">Housing Assistance</option>
+              <option value="medical">Medical Support</option>
+              <option value="legal">Legal Aid</option>
+              <option value="financial">Financial Support</option>
+              <option value="family">Family Services</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Case Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              rows={4}
+              value={formData.description}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="priorityLevel">Priority Level</Label>
+            <select
+              id="priorityLevel"
+              name="priorityLevel"
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              value={formData.priorityLevel}
+              onChange={handleInputChange}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Required Documents</h3>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="hasIdentification"
+              checked={formData.hasIdentification}
+              onCheckedChange={(checked) => handleCheckboxChange('hasIdentification', checked === true)}
+            />
+            <Label htmlFor="hasIdentification">Identification (ID, Passport, etc.)</Label>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="hasProofOfResidence"
+              checked={formData.hasProofOfResidence}
+              onCheckedChange={(checked) => handleCheckboxChange('hasProofOfResidence', checked === true)}
+            />
+            <Label htmlFor="hasProofOfResidence">Proof of Residence</Label>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="hasIncomeVerification"
+              checked={formData.hasIncomeVerification}
+              onCheckedChange={(checked) => handleCheckboxChange('hasIncomeVerification', checked === true)}
+            />
+            <Label htmlFor="hasIncomeVerification">Income Verification</Label>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render consent and submit form
+  const renderConsentForm = () => {
+    return (
+      <div className="space-y-6">
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md">
+          <h3 className="text-lg font-medium text-yellow-800 mb-2">Terms & Consent</h3>
+          <p className="text-yellow-700 mb-2">
+            By registering with Case Compass, you are agreeing to the following terms and conditions:
+          </p>
+          <ul className="list-disc list-inside text-sm text-yellow-700 space-y-2">
+            <li>Your information will be securely stored in our system</li>
+            <li>We may share your information with relevant service providers to assist with your case</li>
+            <li>We will protect your personal data according to our privacy policy</li>
+            <li>You can request access to or deletion of your data at any time</li>
+          </ul>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="consentToShare"
+              checked={formData.consentToShare}
+              onCheckedChange={(checked) => handleCheckboxChange('consentToShare', checked === true)}
+            />
+            <div>
+              <Label htmlFor="consentToShare" className="font-medium">Consent to Share Information</Label>
+              <p className="text-sm text-gray-500">
+                I give permission for my information to be shared with appropriate service providers to facilitate assistance.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="privacyAgreement"
+              checked={formData.privacyAgreement}
+              onCheckedChange={(checked) => handleCheckboxChange('privacyAgreement', checked === true)}
+            />
+            <div>
+              <Label htmlFor="privacyAgreement" className="font-medium">Privacy Agreement</Label>
+              <p className="text-sm text-gray-500">
+                I have read and agree to the privacy policy and terms of service.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-blue-700 text-sm">
+            By clicking "Complete Registration", a new victim profile will be created and a case will be initiated 
+            based on the information provided. You will be able to edit this information later if needed.
+          </p>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render current form step
+  const renderFormStep = () => {
+    switch (formStep) {
       case 1:
-        return renderContactInfo();
+        return renderPersonalInfoForm();
       case 2:
-        return renderEmergencyContact();
+        return renderContactForm();
       case 3:
-        return renderCaseInfo();
+        return renderCaseForm();
       case 4:
-        return renderAdditionalNeeds();
+        return renderConsentForm();
       default:
         return null;
     }
   };
-
+  
   return (
-    <DashboardLayout title="Victim Intake" sidebarItems={sidebarItems}>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">New Victim Registration</h2>
-            <div className="text-sm text-gray-500">
-              Step {currentStep + 1} of {steps.length}
-            </div>
-          </div>
-          
-          <div className="mt-4 overflow-hidden rounded-full bg-gray-200">
-            <div
-              className="h-2 bg-blue-600 transition-all"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-            ></div>
-          </div>
+    <DashboardLayout title="Victim Intake" sidebarItems={getSidebarItems()}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">New Victim Registration</h1>
+          <p className="text-gray-500">Register a new victim to provide assistance</p>
         </div>
         
-        <Card className="mb-8">
+        <Card>
           <CardHeader>
-            <CardTitle>{steps[currentStep].title}</CardTitle>
-            <CardDescription>{steps[currentStep].description}</CardDescription>
+            <CardTitle>Registration Form</CardTitle>
           </CardHeader>
-          
           <CardContent>
-            {renderCurrentStep()}
+            {renderStepIndicator()}
+            <form onSubmit={handleSubmit}>
+              {renderFormStep()}
+              
+              <div className="mt-8 flex justify-between">
+                {formStep > 1 && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={handlePreviousStep}
+                  >
+                    Previous
+                  </Button>
+                )}
+                
+                {formStep < 4 ? (
+                  <Button 
+                    type="button" 
+                    className="ml-auto"
+                    onClick={handleNextStep}
+                  >
+                    Next Step
+                  </Button>
+                ) : (
+                  <Button type="submit" className="ml-auto bg-healing-600 hover:bg-healing-700">
+                    <Save className="w-4 h-4 mr-2" />
+                    Complete Registration
+                  </Button>
+                )}
+              </div>
+            </form>
           </CardContent>
-          
-          <CardFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
-            </Button>
-            
-            <Button onClick={handleNext}>
-              {currentStep < steps.length - 1 ? (
-                <>
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
-                  Complete
-                  <Check className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </DashboardLayout>
