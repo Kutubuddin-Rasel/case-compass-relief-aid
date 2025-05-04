@@ -21,6 +21,8 @@ import ConsentForms from "./pages/ConsentForms";
 import VictimProfile from "./pages/VictimProfile";
 import AdminVictimManagement from "./pages/AdminVictimManagement";
 import AdminVictimIntake from "./pages/AdminVictimIntake";
+import AdminCases from "./pages/AdminCases";
+import AdminCaseDetail from "./pages/AdminCaseDetail";
 import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
 
@@ -52,7 +54,8 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/victims" element={<AdminVictimManagement />} />
           <Route path="/admin/intake" element={<AdminVictimIntake />} />
-          <Route path="/admin/cases/:id" element={<CaseDetail isAdmin={true} />} />
+          <Route path="/admin/cases" element={<AdminCases />} />
+          <Route path="/admin/cases/:id" element={<AdminCaseDetail />} />
           <Route path="/admin/documents" element={<Documents isAdmin={true} />} />
           <Route path="/admin/medical-records" element={<MedicalRecords isAdmin={true} />} />
           <Route path="/admin/financial-aid" element={<FinancialAid isAdmin={true} />} />

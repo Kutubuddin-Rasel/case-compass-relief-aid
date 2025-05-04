@@ -1,17 +1,19 @@
+
 import { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Home, FileText, Calendar, Users, Bell, Settings, FileImage, Edit, Save } from 'lucide-react';
 
@@ -56,27 +58,27 @@ const mockVictimData: VictimData = {
   firstName: 'John',
   lastName: 'Doe',
   email: 'johndoe@example.com',
-  phone: '(123) 456-7890',
-  dateOfBirth: '1990-05-15',
+  phone: '(555) 123-4567',
+  dateOfBirth: '1985-06-15',
   gender: 'Male',
   address: {
-    street: '123 Main Street',
-    city: 'Cityville',
-    state: 'State',
+    street: '123 Main St',
+    city: 'Anytown',
+    state: 'CA',
     zipCode: '12345',
-    country: 'Country'
+    country: 'USA'
   },
   emergencyContact: {
     name: 'Jane Doe',
     relationship: 'Spouse',
-    phone: '(098) 765-4321'
+    phone: '(555) 987-6543'
   },
   medicalInfo: {
     bloodType: 'O+',
-    allergies: 'None',
-    medicalConditions: 'Hypertension'
+    allergies: 'Penicillin',
+    medicalConditions: 'None'
   },
-  joinDate: '2025-03-10T09:00:00'
+  joinDate: '2023-10-15'
 };
 
 const VictimProfile = () => {
@@ -102,28 +104,32 @@ const VictimProfile = () => {
         icon: <Calendar />,
       },
       {
-        name: 'Documents',
-        href: '/documents',
-        icon: <FileImage />,
+        name: 'Support Network',
+        href: '/support-network',
+        icon: <Users />,
       },
       {
-        name: 'My Profile',
+        name: 'Notifications',
+        href: '/notifications',
+        icon: <Bell />,
+      },
+      {
+        name: 'Profile',
         href: '/profile',
         icon: <Users />,
+      },
+      {
+        name: 'Settings',
+        href: '/settings',
+        icon: <Settings />,
       },
     ];
   };
   
-  const handleEditToggle = () => {
-    if (isEditing) {
-      // Save changes
-      setProfile(editableProfile);
-      toast.success('Profile updated successfully');
-    } else {
-      // Start editing
-      setEditableProfile({...profile});
-    }
-    setIsEditing(!isEditing);
+  const handleSaveProfile = () => {
+    setProfile(editableProfile);
+    setIsEditing(false);
+    toast.success('Profile updated successfully!');
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, section?: string, field?: string) => {
@@ -165,325 +171,451 @@ const VictimProfile = () => {
     }
   };
   
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      // Cancel edit, revert to original profile
+      setEditableProfile(profile);
+    }
+    setIsEditing(!isEditing);
   };
   
+  const renderProfileView = () => (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Personal Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-sm text-gray-500">First Name</p>
+              <p className="font-medium">{profile.firstName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Last Name</p>
+              <p className="font-medium">{profile.lastName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium">{profile.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium">{profile.phone}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Date of Birth</p>
+              <p className="font-medium">{new Date(profile.dateOfBirth).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Gender</p>
+              <p className="font-medium">{profile.gender}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Address</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-sm text-gray-500">Street</p>
+              <p className="font-medium">{profile.address.street}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">City</p>
+              <p className="font-medium">{profile.address.city}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">State</p>
+              <p className="font-medium">{profile.address.state}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Zip Code</p>
+              <p className="font-medium">{profile.address.zipCode}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Country</p>
+              <p className="font-medium">{profile.address.country}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Emergency Contact</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-sm text-gray-500">Name</p>
+              <p className="font-medium">{profile.emergencyContact.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Relationship</p>
+              <p className="font-medium">{profile.emergencyContact.relationship}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium">{profile.emergencyContact.phone}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Medical Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-sm text-gray-500">Blood Type</p>
+              <p className="font-medium">{profile.medicalInfo.bloodType}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Allergies</p>
+              <p className="font-medium">{profile.medicalInfo.allergies || 'None'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Medical Conditions</p>
+              <p className="font-medium">{profile.medicalInfo.medicalConditions || 'None'}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Account Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-sm text-gray-500">User ID</p>
+              <p className="font-medium">{profile.id}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Date Joined</p>
+              <p className="font-medium">{new Date(profile.joinDate).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+  
+  const renderProfileEdit = () => (
+    <div className="space-y-8">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Personal Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">First Name</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="firstName"
+                value={editableProfile.firstName}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Last Name</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="lastName"
+                value={editableProfile.lastName}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                type="email"
+                className="w-full p-2 border rounded-md"
+                name="email"
+                value={editableProfile.email}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Phone</label>
+              <input
+                type="tel"
+                className="w-full p-2 border rounded-md"
+                name="phone"
+                value={editableProfile.phone}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Date of Birth</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded-md"
+                name="dateOfBirth"
+                value={editableProfile.dateOfBirth}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Gender</label>
+              <select
+                className="w-full p-2 border rounded-md"
+                name="gender"
+                value={editableProfile.gender}
+                onChange={(e) => handleSelectChange(e)}
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Address</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1">Street</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="street"
+                value={editableProfile.address.street}
+                onChange={(e) => handleInputChange(e, 'address', 'street')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">City</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="city"
+                value={editableProfile.address.city}
+                onChange={(e) => handleInputChange(e, 'address', 'city')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">State</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="state"
+                value={editableProfile.address.state}
+                onChange={(e) => handleInputChange(e, 'address', 'state')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Zip Code</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="zipCode"
+                value={editableProfile.address.zipCode}
+                onChange={(e) => handleInputChange(e, 'address', 'zipCode')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Country</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="country"
+                value={editableProfile.address.country}
+                onChange={(e) => handleInputChange(e, 'address', 'country')}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Emergency Contact</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="name"
+                value={editableProfile.emergencyContact.name}
+                onChange={(e) => handleInputChange(e, 'emergencyContact', 'name')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Relationship</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="relationship"
+                value={editableProfile.emergencyContact.relationship}
+                onChange={(e) => handleInputChange(e, 'emergencyContact', 'relationship')}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Phone</label>
+              <input
+                type="tel"
+                className="w-full p-2 border rounded-md"
+                name="phone"
+                value={editableProfile.emergencyContact.phone}
+                onChange={(e) => handleInputChange(e, 'emergencyContact', 'phone')}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Medical Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Blood Type</label>
+              <select
+                className="w-full p-2 border rounded-md"
+                name="bloodType"
+                value={editableProfile.medicalInfo.bloodType}
+                onChange={(e) => handleSelectChange(e, 'medicalInfo', 'bloodType')}
+              >
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Allergies</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                name="allergies"
+                value={editableProfile.medicalInfo.allergies}
+                onChange={(e) => handleInputChange(e, 'medicalInfo', 'allergies')}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-1">Medical Conditions</label>
+              <textarea
+                className="w-full p-2 border rounded-md"
+                name="medicalConditions"
+                value={editableProfile.medicalInfo.medicalConditions}
+                onChange={(e) => handleInputChange(e, 'medicalInfo', 'medicalConditions')}
+                rows={3}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+  
   return (
-    <DashboardLayout
-      title="My Profile"
-      sidebarItems={getSidebarItems()}
-    >
+    <DashboardLayout title="Victim Profile" sidebarItems={getSidebarItems()}>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Personal Information</h2>
-          <Button onClick={handleEditToggle}>
-            {isEditing ? (
-              <>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src="/placeholder.svg" alt={profile.firstName} />
+              <AvatarFallback>{profile.firstName.charAt(0)}{profile.lastName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            
+            <div>
+              <h2 className="text-2xl font-bold">{profile.firstName} {profile.lastName}</h2>
+              <p className="text-gray-500">ID: {profile.id}</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <FileImage className="w-4 h-4 mr-2" />
+                  Change Photo
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Change Profile Photo</DialogTitle>
+                  <DialogDescription>
+                    Upload a new profile photo here. The photo should be a square image.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <input type="file" accept="image/*" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Save changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            <Button onClick={handleToggleEdit}>
+              {isEditing ? (
+                <>Cancel</>
+              ) : (
+                <>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </>
+              )}
+            </Button>
+            
+            {isEditing && (
+              <Button onClick={handleSaveProfile}>
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
-              </>
-            ) : (
-              <>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
-              </>
+              </Button>
             )}
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="md:col-span-1">
-            <CardContent className="pt-6 flex flex-col items-center">
-              <Avatar className="h-32 w-32">
-                <AvatarFallback className="text-3xl bg-healing-100 text-healing-800">
-                  {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <h3 className="mt-4 text-xl font-semibold">{profile.firstName} {profile.lastName}</h3>
-              <p className="text-gray-500">Member since {formatDate(profile.joinDate)}</p>
-            </CardContent>
-          </Card>
-          
-          <div className="md:col-span-3 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">First Name</label>
-                    {isEditing ? (
-                      <Input 
-                        name="firstName"
-                        value={editableProfile.firstName}
-                        onChange={handleInputChange}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.firstName}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Last Name</label>
-                    {isEditing ? (
-                      <Input 
-                        name="lastName"
-                        value={editableProfile.lastName}
-                        onChange={handleInputChange}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.lastName}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Email</label>
-                    {isEditing ? (
-                      <Input 
-                        name="email"
-                        value={editableProfile.email}
-                        onChange={handleInputChange}
-                        type="email"
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.email}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Phone</label>
-                    {isEditing ? (
-                      <Input 
-                        name="phone"
-                        value={editableProfile.phone}
-                        onChange={handleInputChange}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.phone}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Date of Birth</label>
-                    {isEditing ? (
-                      <Input 
-                        name="dateOfBirth"
-                        value={editableProfile.dateOfBirth}
-                        onChange={handleInputChange}
-                        type="date"
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{formatDate(profile.dateOfBirth)}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Gender</label>
-                    {isEditing ? (
-                      <select 
-                        className="w-full p-2 border rounded-md"
-                        name="gender"
-                        value={editableProfile.gender}
-                        onChange={(e) => handleSelectChange(e)}
-                      >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                        <option value="Prefer not to say">Prefer not to say</option>
-                      </select>
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.gender}</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Address</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Street Address</label>
-                    {isEditing ? (
-                      <Input 
-                        name="street"
-                        value={editableProfile.address.street}
-                        onChange={(e) => handleInputChange(e, 'address', 'street')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.address.street}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">City</label>
-                    {isEditing ? (
-                      <Input 
-                        name="city"
-                        value={editableProfile.address.city}
-                        onChange={(e) => handleInputChange(e, 'address', 'city')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.address.city}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">State/Province</label>
-                    {isEditing ? (
-                      <Input 
-                        name="state"
-                        value={editableProfile.address.state}
-                        onChange={(e) => handleInputChange(e, 'address', 'state')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.address.state}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Zip/Postal Code</label>
-                    {isEditing ? (
-                      <Input 
-                        name="zipCode"
-                        value={editableProfile.address.zipCode}
-                        onChange={(e) => handleInputChange(e, 'address', 'zipCode')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.address.zipCode}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Country</label>
-                    {isEditing ? (
-                      <Input 
-                        name="country"
-                        value={editableProfile.address.country}
-                        onChange={(e) => handleInputChange(e, 'address', 'country')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.address.country}</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Emergency Contact</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Full Name</label>
-                    {isEditing ? (
-                      <Input 
-                        name="name"
-                        value={editableProfile.emergencyContact.name}
-                        onChange={(e) => handleInputChange(e, 'emergencyContact', 'name')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.emergencyContact.name}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Relationship</label>
-                    {isEditing ? (
-                      <Input 
-                        name="relationship"
-                        value={editableProfile.emergencyContact.relationship}
-                        onChange={(e) => handleInputChange(e, 'emergencyContact', 'relationship')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.emergencyContact.relationship}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Phone Number</label>
-                    {isEditing ? (
-                      <Input 
-                        name="phone"
-                        value={editableProfile.emergencyContact.phone}
-                        onChange={(e) => handleInputChange(e, 'emergencyContact', 'phone')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.emergencyContact.phone}</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Medical Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Blood Type</label>
-                    {isEditing ? (
-                      <select
-                        className="w-full p-2 border rounded-md"
-                        name="bloodType"
-                        value={editableProfile.medicalInfo.bloodType}
-                        onChange={(e) => handleSelectChange(e, 'medicalInfo', 'bloodType')}
-                      >
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                        <option value="Unknown">Unknown</option>
-                      </select>
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.medicalInfo.bloodType}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-medium">Allergies</label>
-                    {isEditing ? (
-                      <Input 
-                        name="allergies"
-                        value={editableProfile.medicalInfo.allergies}
-                        onChange={(e) => handleInputChange(e, 'medicalInfo', 'allergies')}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.medicalInfo.allergies || 'None'}</div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 md:col-span-3">
-                    <label className="text-sm font-medium">Medical Conditions</label>
-                    {isEditing ? (
-                      <Textarea 
-                        name="medicalConditions"
-                        value={editableProfile.medicalInfo.medicalConditions}
-                        onChange={(e) => handleInputChange(e, 'medicalInfo', 'medicalConditions')}
-                        rows={3}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">{profile.medicalInfo.medicalConditions || 'None'}</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
+        
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full md:w-auto grid-cols-2">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="case-history">Case History</TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile" className="space-y-4 mt-4">
+            {isEditing ? renderProfileEdit() : renderProfileView()}
+          </TabsContent>
+          <TabsContent value="case-history" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Case History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500 italic">No case history found for this victim.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
