@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
   }>;
 }
 
-const Dash2boardLayout = ({ title, children, sidebarItems }: DashboardLayoutProps) => {
+const DashboardLayout = ({ title, children, sidebarItems }: DashboardLayoutProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
