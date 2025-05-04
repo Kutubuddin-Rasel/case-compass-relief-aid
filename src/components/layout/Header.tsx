@@ -12,12 +12,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { Menu } from 'lucide-react';
 
 interface HeaderProps {
   title: string;
+  toggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
 }
 
-const Header = ({ title }: HeaderProps) => {
+const Header = ({ title, toggleSidebar, isSidebarOpen }: HeaderProps) => {
   const navigate = useNavigate();
   const [userType, setUserType] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('User');
@@ -44,7 +47,20 @@ const Header = ({ title }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-30 bg-white shadow-sm">
       <div className="flex h-16 items-center justify-between px-6">
-        <h1 className="text-2xl font-semibold text-healing-800">{title}</h1>
+        <div className="flex items-center">
+          {toggleSidebar && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="mr-4 md:hidden"
+              onClick={toggleSidebar}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle sidebar</span>
+            </Button>
+          )}
+          <h1 className="text-2xl font-semibold text-healing-800">{title}</h1>
+        </div>
         
         <div className="flex items-center space-x-4">
           {userType ? (

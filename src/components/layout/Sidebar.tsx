@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
 interface SidebarItem {
   name: string;
@@ -12,48 +12,21 @@ interface SidebarItem {
 
 interface SidebarProps {
   items: SidebarItem[];
+  isOpen: boolean;
+  toggleSidebar: () => void;
+  isMobile: boolean;
 }
 
-const Sidebar = ({ items }: SidebarProps) => {
+const Sidebar = ({ items, isOpen, toggleSidebar, isMobile }: SidebarProps) => {
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
-  
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsOpen(window.innerWidth >= 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => {
-      window.removeEventListener('resize', checkScreenSize);
-    };
-  }, []);
   
   return (
     <>
-      {/* Mobile toggle button */}
-      <Button
-        variant="outline"
-        size="icon"
-        className={cn(
-          "fixed bottom-4 right-4 z-40 rounded-full bg-healing-600 text-white hover:bg-healing-700 shadow-lg md:hidden",
-          isOpen && "bg-healing-700"
-        )}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="sr-only">Toggle sidebar</span>
-        {isOpen ? '✕' : '☰'}
-      </Button>
-      
       {/* Overlay for mobile */}
       {isMobile && isOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/50"
-          onClick={() => setIsOpen(false)}
+          onClick={toggleSidebar}
         />
       )}
       
@@ -67,13 +40,22 @@ const Sidebar = ({ items }: SidebarProps) => {
           !isMobile && isOpen && "translate-x-0"
         )}
       >
-        <div className="flex h-16 items-center justify-center border-b">
+        <div className="flex h-16 items-center justify-between border-b px-4">
           <h2 className="text-xl font-bold text-healing-700">Case Compass</h2>
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleSidebar}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
         
         <nav className="space-y-1 px-2 py-4">
           {items.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
             
             return (
               <Link
@@ -85,7 +67,7 @@ const Sidebar = ({ items }: SidebarProps) => {
                     ? "bg-healing-100 text-healing-700"
                     : "text-gray-700 hover:bg-healing-50 hover:text-healing-700"
                 )}
-                onClick={() => isMobile && setIsOpen(false)}
+                onClick={() => isMobile && toggleSidebar()}
               >
                 <div className="mr-3">{item.icon}</div>
                 {item.name}
