@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { toast } from 'sonner';
-import { Home, Users, FileText, Calendar, Bell, Settings, ClipboardList, Download, FileText2, PieChart as PieChartIcon } from 'lucide-react';
+import { Home, Users, FileText, Calendar, Bell, Settings, ClipboardList, Download, PieChart as PieChartIcon } from 'lucide-react';
 
 // Mock data for charts
 const caseStatusData = [
@@ -183,7 +183,7 @@ const AdminReports = () => {
               variant={reportType === 'cases' ? 'default' : 'outline'}
               onClick={() => setReportType('cases')}
             >
-              <FileText2 className="w-4 h-4 mr-2" />
+              <FileText className="w-4 h-4 mr-2" />
               Cases Report
             </Button>
             <Button

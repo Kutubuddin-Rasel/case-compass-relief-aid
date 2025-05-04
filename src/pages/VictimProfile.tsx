@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -16,8 +15,43 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Home, FileText, Calendar, Users, Bell, Settings, FileImage, Edit, Save } from 'lucide-react';
 
+// Define types for our profile data
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+}
+
+interface MedicalInfo {
+  bloodType: string;
+  allergies: string;
+  medicalConditions: string;
+}
+
+interface VictimData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  gender: string;
+  address: Address;
+  emergencyContact: EmergencyContact;
+  medicalInfo: MedicalInfo;
+  joinDate: string;
+}
+
 // Mock victim data
-const mockVictimData = {
+const mockVictimData: VictimData = {
   id: 'victim1',
   firstName: 'John',
   lastName: 'Doe',
@@ -46,9 +80,9 @@ const mockVictimData = {
 };
 
 const VictimProfile = () => {
-  const [profile, setProfile] = useState(mockVictimData);
+  const [profile, setProfile] = useState<VictimData>(mockVictimData);
   const [isEditing, setIsEditing] = useState(false);
-  const [editableProfile, setEditableProfile] = useState(mockVictimData);
+  const [editableProfile, setEditableProfile] = useState<VictimData>(mockVictimData);
   
   const getSidebarItems = () => {
     return [
@@ -96,18 +130,38 @@ const VictimProfile = () => {
     const { name, value } = e.target;
     
     if (section && field) {
-      setEditableProfile({
-        ...editableProfile,
+      setEditableProfile(prev => ({
+        ...prev,
         [section]: {
-          ...editableProfile[section as keyof typeof editableProfile],
+          ...prev[section as keyof VictimData] as object,
           [field]: value
         }
-      });
+      }));
     } else {
-      setEditableProfile({
-        ...editableProfile,
+      setEditableProfile(prev => ({
+        ...prev,
         [name]: value
-      });
+      }));
+    }
+  };
+
+  // Separate handler for select inputs
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>, section?: string, field?: string) => {
+    const { name, value } = e.target;
+    
+    if (section && field) {
+      setEditableProfile(prev => ({
+        ...prev,
+        [section]: {
+          ...prev[section as keyof VictimData] as object,
+          [field]: value
+        }
+      }));
+    } else {
+      setEditableProfile(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
   
@@ -232,7 +286,7 @@ const VictimProfile = () => {
                         className="w-full p-2 border rounded-md"
                         name="gender"
                         value={editableProfile.gender}
-                        onChange={(e) => setEditableProfile({...editableProfile, gender: e.target.value})}
+                        onChange={(e) => handleSelectChange(e)}
                       >
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -382,7 +436,7 @@ const VictimProfile = () => {
                         className="w-full p-2 border rounded-md"
                         name="bloodType"
                         value={editableProfile.medicalInfo.bloodType}
-                        onChange={(e) => handleInputChange(e, 'medicalInfo', 'bloodType')}
+                        onChange={(e) => handleSelectChange(e, 'medicalInfo', 'bloodType')}
                       >
                         <option value="A+">A+</option>
                         <option value="A-">A-</option>
