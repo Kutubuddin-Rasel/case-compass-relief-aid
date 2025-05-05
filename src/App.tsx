@@ -25,6 +25,8 @@ import AdminCases from "./pages/AdminCases";
 import AdminCaseDetail from "./pages/AdminCaseDetail";
 import AdminReports from "./pages/AdminReports";
 import AdminSettings from "./pages/AdminSettings";
+import LandingPage from "./pages/LandingPage";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Landing Page */}
+          <Route path="/landing" element={<LandingPage />} />
+          
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -65,8 +70,8 @@ const App = () => (
           <Route path="/admin/reports" element={<AdminReports />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           
-          {/* Redirect root to login */}
-          <Route path="/" element={<Login />} />
+          {/* Redirect root to Index (which redirects to landing) */}
+          <Route path="/" element={<Index />} />
           
           {/* Catch-all route for 404 */}
           <Route path="*" element={<NotFound />} />
