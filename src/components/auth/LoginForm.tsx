@@ -120,14 +120,6 @@ const LoginForm = () => {
           </div>
         </div>
         
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p className="text-xs text-yellow-800">
-            <strong>Admin credentials:</strong><br />
-            Email: admin@gmail.com<br />
-            Password: admin
-          </p>
-        </div>
-        
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}
