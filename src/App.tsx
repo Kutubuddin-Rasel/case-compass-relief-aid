@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import VictimDashboard from "./pages/VictimDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import Cases from "./pages/Cases";
 import CaseDetail from "./pages/CaseDetail";
 import Documents from "./pages/Documents";
 import MedicalRecords from "./pages/MedicalRecords";
@@ -46,6 +47,7 @@ const App = () => (
           
           {/* Victim Routes */}
           <Route path="/dashboard" element={<VictimDashboard />} />
+          <Route path="/cases" element={<Cases />} />
           <Route path="/cases/:id" element={<CaseDetail />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/medical-records" element={<MedicalRecords />} />
