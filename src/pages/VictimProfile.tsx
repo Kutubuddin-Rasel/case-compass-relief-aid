@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Home, FileText, Calendar, Users, Bell, Settings, FileImage, Edit, Save } from 'lucide-react';
+import { useUserProfile, useUpdateProfile } from '@/hooks/useOracleDatabase';
 
 // Define types for our profile data
 interface Address {
@@ -52,39 +54,26 @@ interface VictimData {
   joinDate: string;
 }
 
-// Mock victim data
-const mockVictimData: VictimData = {
-  id: 'victim1',
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'johndoe@example.com',
-  phone: '(555) 123-4567',
-  dateOfBirth: '1985-06-15',
-  gender: 'Male',
-  address: {
-    street: '123 Main St',
-    city: 'Anytown',
-    state: 'CA',
-    zipCode: '12345',
-    country: 'USA'
-  },
-  emergencyContact: {
-    name: 'Jane Doe',
-    relationship: 'Spouse',
-    phone: '(555) 987-6543'
-  },
-  medicalInfo: {
-    bloodType: 'O+',
-    allergies: 'Penicillin',
-    medicalConditions: 'None'
-  },
-  joinDate: '2023-10-15'
-};
-
 const VictimProfile = () => {
-  const [profile, setProfile] = useState<VictimData>(mockVictimData);
+  // Get current user ID (in a real app, this would come from auth context)
+  const userId = 'victim1'; // Placeholder for actual user ID from auth
+  
+  // Fetch profile data using our new hook
+  const { data: profileData, isLoading, error } = useUserProfile(userId);
+  const updateProfileMutation = useUpdateProfile();
+  
+  const [profile, setProfile] = useState<VictimData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editableProfile, setEditableProfile] = useState<VictimData>(mockVictimData);
+  const [editableProfile, setEditableProfile] = useState<VictimData | null>(null);
+  const navigate = useNavigate();
+  
+  // Update local state when profile data is loaded
+  useEffect(() => {
+    if (profileData) {
+      setProfile(profileData);
+      setEditableProfile(profileData);
+    }
+  }, [profileData]);
   
   const getSidebarItems = () => {
     return [
@@ -126,48 +115,70 @@ const VictimProfile = () => {
     ];
   };
   
-  const handleSaveProfile = () => {
-    setProfile(editableProfile);
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    if (!editableProfile) return;
+    
+    try {
+      await updateProfileMutation.mutateAsync(editableProfile);
+      setIsEditing(false);
+    } catch (error) {
+      // Error is handled in the mutation hook
+      console.error("Error occurred:", error);
+    }
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, section?: string, field?: string) => {
+    if (!editableProfile) return;
+    
     const { name, value } = e.target;
     
     if (section && field) {
-      setEditableProfile(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section as keyof VictimData] as object,
-          [field]: value
-        }
-      }));
+      setEditableProfile(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [section]: {
+            ...prev[section as keyof VictimData] as object,
+            [field]: value
+          }
+        };
+      });
     } else {
-      setEditableProfile(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setEditableProfile(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [name]: value
+        };
+      });
     }
   };
 
   // Separate handler for select inputs
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>, section?: string, field?: string) => {
+    if (!editableProfile) return;
+    
     const { name, value } = e.target;
     
     if (section && field) {
-      setEditableProfile(prev => ({
-        ...prev,
-        [section]: {
-          ...prev[section as keyof VictimData] as object,
-          [field]: value
-        }
-      }));
+      setEditableProfile(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [section]: {
+            ...prev[section as keyof VictimData] as object,
+            [field]: value
+          }
+        };
+      });
     } else {
-      setEditableProfile(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setEditableProfile(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [name]: value
+        };
+      });
     }
   };
   
@@ -178,6 +189,27 @@ const VictimProfile = () => {
     }
     setIsEditing(!isEditing);
   };
+  
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Loading Profile..." sidebarItems={getSidebarItems()}>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin h-8 w-8 border-4 border-healing-600 rounded-full border-t-transparent"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (error || !profile || !editableProfile) {
+    return (
+      <DashboardLayout title="Profile Error" sidebarItems={getSidebarItems()}>
+        <div className="p-4 bg-red-50 text-red-800 rounded-md">
+          <p>Failed to load profile data. Please try again later.</p>
+          <Button onClick={() => window.location.reload()} className="mt-2">Retry</Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
   
   const renderProfileView = () => (
     <div className="space-y-8">
@@ -572,7 +604,7 @@ const VictimProfile = () => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Save changes</Button>
+                  <Button type="submit" onClick={() => toast.success("Photo uploaded successfully!")}>Save changes</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -589,9 +621,15 @@ const VictimProfile = () => {
             </Button>
             
             {isEditing && (
-              <Button onClick={handleSaveProfile}>
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
+              <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
+                {updateProfileMutation.isPending ? (
+                  <><span className="animate-spin mr-2">⟳</span> Saving...</>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             )}
           </div>

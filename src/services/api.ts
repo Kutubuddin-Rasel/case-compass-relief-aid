@@ -31,6 +31,35 @@ api.interceptors.response.use(
   }
 );
 
+// Mock data for development when backend is not available
+const mockProfile = {
+  id: 'victim1',
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'johndoe@example.com',
+  phone: '(555) 123-4567',
+  dateOfBirth: '1985-06-15',
+  gender: 'Male',
+  address: {
+    street: '123 Main St',
+    city: 'Anytown',
+    state: 'CA',
+    zipCode: '12345',
+    country: 'USA'
+  },
+  emergencyContact: {
+    name: 'Jane Doe',
+    relationship: 'Spouse',
+    phone: '(555) 987-6543'
+  },
+  medicalInfo: {
+    bloodType: 'O+',
+    allergies: 'Penicillin',
+    medicalConditions: 'None'
+  },
+  joinDate: '2023-10-15'
+};
+
 export const casesApi = {
   getAllCases: async () => {
     try {
@@ -89,6 +118,37 @@ export const casesApi = {
       return response.data;
     } catch (error) {
       console.error('Error testing database connection:', error);
+      throw error;
+    }
+  },
+
+  // User profile API functions
+  getUserProfile: async (userId?: string) => {
+    try {
+      // For real implementation:
+      // const response = await api.get(`/users/${userId || 'current'}/profile`);
+      // return response.data;
+      
+      // For development when backend is not available, return mock data
+      console.log('Fetching profile for user:', userId);
+      return mockProfile;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      throw error;
+    }
+  },
+
+  updateProfile: async (profileData: any) => {
+    try {
+      // For real implementation:
+      // const response = await api.put(`/users/${profileData.id}/profile`, profileData);
+      // return response.data;
+      
+      // For development when backend is not available
+      console.log('Profile update data:', profileData);
+      return { success: true, data: { ...mockProfile, ...profileData } };
+    } catch (error) {
+      console.error('Error updating profile:', error);
       throw error;
     }
   }
