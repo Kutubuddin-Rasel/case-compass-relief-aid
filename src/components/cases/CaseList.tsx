@@ -18,48 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-// Mock data
-const mockCases = [
-  {
-    id: 'CS-2023-001',
-    title: 'Medical Treatment Support',
-    status: 'open',
-    lastUpdated: '2025-05-01T14:30:00',
-    type: 'medical',
-  },
-  {
-    id: 'CS-2023-002',
-    title: 'Legal Aid Application',
-    status: 'in-progress',
-    lastUpdated: '2025-04-28T09:15:00',
-    type: 'legal',
-  },
-  {
-    id: 'CS-2023-003',
-    title: 'Rehabilitation Program',
-    status: 'closed',
-    lastUpdated: '2025-04-15T16:45:00',
-    type: 'support',
-  },
-  {
-    id: 'CS-2023-004',
-    title: 'Emergency Housing Assistance',
-    status: 'open',
-    lastUpdated: '2025-05-03T11:20:00',
-    type: 'support',
-  },
-];
+import { useCases } from '@/hooks/useOracleDatabase';
 
 interface CaseListProps {
   isAdmin?: boolean;
 }
 
 const CaseList = ({ isAdmin = false }: CaseListProps) => {
-  const [cases, setCases] = useState(mockCases);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  
+  const { data, isLoading, error } = useCases();
+  const cases = data?.data || [];
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -69,9 +40,9 @@ const CaseList = ({ isAdmin = false }: CaseListProps) => {
     });
   };
   
-  const filteredCases = cases.filter((c) => {
+  const filteredCases = cases.filter((c: any) => {
     // Apply status filter
-    if (filter !== 'all' && c.status !== filter) return false;
+    if (filter !== 'all' && c.status.toLowerCase() !== filter) return false;
     
     // Apply search filter
     if (
@@ -94,7 +65,7 @@ const CaseList = ({ isAdmin = false }: CaseListProps) => {
   };
   
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'open':
         return 'bg-blue-100 text-blue-800';
       case 'in-progress':
@@ -105,6 +76,31 @@ const CaseList = ({ isAdmin = false }: CaseListProps) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex justify-center">
+            <p>Loading cases...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="bg-red-50 text-red-800 p-4 rounded-md">
+            <p>Error loading cases. Please try again later.</p>
+            <p className="text-sm mt-2">Note: Make sure the backend server is running.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card>
@@ -145,7 +141,7 @@ const CaseList = ({ isAdmin = false }: CaseListProps) => {
         </div>
         
         <div className="space-y-4">
-          {filteredCases.map((c) => (
+          {filteredCases.length > 0 ? filteredCases.map((c: any) => (
             <div
               key={c.id}
               className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
@@ -158,7 +154,7 @@ const CaseList = ({ isAdmin = false }: CaseListProps) => {
                   </Badge>
                 </div>
                 <h4 className="font-medium text-gray-900 mt-1">{c.title}</h4>
-                <p className="text-sm text-gray-500">Last updated: {formatDate(c.lastUpdated)}</p>
+                <p className="text-sm text-gray-500">Last updated: {formatDate(c.lastUpdated || c.last_updated || new Date().toISOString())}</p>
               </div>
               
               <Button
@@ -170,9 +166,7 @@ const CaseList = ({ isAdmin = false }: CaseListProps) => {
                 View Details
               </Button>
             </div>
-          ))}
-          
-          {filteredCases.length === 0 && (
+          )) : (
             <div className="text-center py-6">
               <p className="text-gray-500">No cases found matching your criteria</p>
             </div>
